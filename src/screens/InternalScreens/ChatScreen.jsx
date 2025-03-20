@@ -5,6 +5,8 @@ import { loader, userId } from '../../utils/utils';
 import { getUserByPhone } from '../../service/AuthApis';
 import { useDispatch } from 'react-redux';
 import { updateUserData } from '../../store/slices/userDataSlice';
+import { getAllMessages, sendMessage, sendNewMessage } from '../../service/MessageService';
+import moment from 'moment';
 
 const messages = [
     { id: '1', type: 'image', content: require('../../assets/images/cat.png'), timestamp: '16:46' },
@@ -16,27 +18,82 @@ const messages = [
 ];
 
 export default function ChatScreen(props) {
-    const [input, setInput] = useState('');
     const dispatch = useDispatch()
+    const [input, setInput] = useState('');
+    const [senderId, setSenderId] = useState('')
+    const [receiverId, setReceiverId] = useState('')
+    const [messageData, setMessageData] = useState([])
 
 
     useEffect(() => {
         getUserData();
-    }, []);
+    }, [props.route.params]);
 
     async function getUserData() {
         try {
             loader.start();
-            console.log(props.route.params)
             let id = await userId();
-            let res = await getUserByPhone({phone:`+91${props.route.params.phone}`})
-            dispatch(updateUserData(res.data.data))
-console.log(res.data.data)
+            setSenderId(id)
+            if (props.route.params?.phone) {
+                let res = await getUserByPhone({ phone: `+91${props.route.params?.phone}` })
+                dispatch(updateUserData(res.data.data))
+                setReceiverId(res?.data?.data?._id)
+            }
+            
+            if (props.route.params?.id) {
+                let res = await getAllMessages(props.route.params?.id)
+                let data = res?.data?.data
+                if (data?.user1?._id !== id) {
+                    dispatch(updateUserData(data?.user1))
+                    setReceiverId(data?.user1?._id)
+                } else {
+                    dispatch(updateUserData(data?.user2))
+                    setReceiverId(data?.user2?._id)
+                }
+                setMessageData(data?.messages?.reverse())
+                console.log(data)
+            }
 
         } catch (err) {
             console.error(err);
         } finally {
             loader.stop();
+        }
+    }
+
+
+    async function sendMessageHandle() {
+        try {
+
+            if (props.route.params?.phone) {
+                let payload = {
+                    message_between: [senderId, receiverId],
+                    messages: [{
+                        type: 'text',
+                        message: input,
+                        sender: senderId,
+                        receiver: receiverId,
+                        status: 'sent',
+                        date_time: moment()?._d
+                    }]
+                }
+                let res = await sendMessage(payload)
+                props.navigation.navigate('chatscreen',{id:res?.data?.data?._id})
+            }
+            if (props.route.params?.id) {
+                let payload = {
+                    type: 'text',
+                    message: input,
+                    sender: senderId,
+                    receiver: receiverId,
+                    status: 'sent',
+                    date_time: moment()?._d
+                }
+                let res = await sendNewMessage(props.route.params?.id, payload)
+            }
+            setInput('')
+        } catch (err) {
+            console.log(err)
         }
     }
 
@@ -62,10 +119,10 @@ console.log(res.data.data)
             );
         }
         return (
-            <View style={[styles.messageBubble, item.sender === 'You' ? styles.sentMessage : styles.receivedMessage]}>
-                {item.sender === 'You' && <Text style={styles.sender}>You</Text>}
-                <Text style={item.sender === 'You' ? styles.messageText : styles.messageGet}>{item.content}</Text>
-                <Text style={item.sender === 'You' ? styles.timestampSent : styles.timestamp}>{item.timestamp} {item.status && `- ${item.status}`}</Text>
+            <View style={[styles.messageBubble, item.sender === senderId ? styles.sentMessage : styles.receivedMessage]}>
+                {/* {item.sender === senderId && <Text style={styles.sender}>You</Text>} */}
+                <Text style={item.sender === senderId ? styles.messageText : styles.messageGet}>{item?.message}</Text>
+                <Text style={item.sender === senderId ? styles.timestampSent : styles.timestamp}>{moment(item.date_time)?.format('hh:mm A')} {item.status && `- ${item.status}`}</Text>
             </View>
         );
     };
@@ -74,8 +131,8 @@ console.log(res.data.data)
         <View style={styles.container}>
             {/* Messages List */}
             <FlatList
-                data={messages}
-                keyExtractor={(item) => item.id}
+                data={messageData}
+                keyExtractor={(item, index) => index}
                 renderItem={renderMessage}
                 contentContainerStyle={styles.messageList}
                 inverted
@@ -93,7 +150,7 @@ console.log(res.data.data)
                     onChangeText={setInput}
                 />
                 <TouchableOpacity>
-                    <Ionicons name="send" size={24} color="blue" />
+                    <Ionicons name="send" size={24} color="blue" onPress={sendMessageHandle} />
                 </TouchableOpacity>
             </View>
         </View>

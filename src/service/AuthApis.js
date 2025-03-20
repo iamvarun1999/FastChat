@@ -8,7 +8,6 @@ export async function getAllUsers() {
 }
 
 export async function getUserByPhone(payload) {
-    console.log(payload)
     return await axios.post(`${baseUrl}${APIS.users.getUserByPhone}`,payload)
 }
 

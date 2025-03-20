@@ -8,5 +8,11 @@ export const APIS = {
         sendOtp:'user/sendOTP',
         verifyOTPAndRegister:'user/register',
         updateUser:'user/updateUser/'
+    },
+    message:{
+        getAllMessages:'message/getAllMessages/',
+        getAllMessagesData:'message/getAllMessageData/',
+        startMessage:'message/startMessage',
+        sendMessage:'message/sendMessage/',
     }
 }

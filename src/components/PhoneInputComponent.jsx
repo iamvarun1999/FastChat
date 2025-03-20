@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import PhoneInput from 'react-native-phone-input';
 
-export default function PhoneInputComponent({ onChangePhone }) {
+export default function PhoneInputComponent({ onChangePhone,setValid }) {
   const phoneRef = useRef(null);
   const [phoneNumber, setPhoneNumber] = useState('');
 
@@ -16,6 +16,9 @@ export default function PhoneInputComponent({ onChangePhone }) {
           setPhoneNumber(number);
           if (onChangePhone) {
             onChangePhone(number);
+          }
+          if (setValid) {
+            setValid(true);
           }
         }}
         textProps={{

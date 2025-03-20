@@ -6,13 +6,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { primaryColor } from '../constants';
 import { Image, Text, TouchableHighlight, TouchableOpacity } from 'react-native';
 import ChatScreen from '../screens/InternalScreens/Chats'
-import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import listIcon from '../assets/images/listCheck.png'
 import addChatIcon from '../assets/images/messageAdd.png'
 
 const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+export default function TabNavigator(props) {
+    
+
     return (
         <>
             <Tab.Navigator
@@ -43,15 +44,15 @@ export default function TabNavigator() {
                     shadowOpacity: 0, // For iOS
                 })}
             >
-                <Tab.Screen name="contacts" options={{ title: 'Contacts', headerRight: () => <TouchableHighlight style={{ marginRight: 15 }}><Ionicons name='add' size={22} /></TouchableHighlight> }} component={Contacts} />
+                <Tab.Screen name="contacts" options={{ title: 'Contacts', headerRight: () => <TouchableHighlight onPress={()=>props.navigation.navigate('importContact')} style={{ marginRight: 15 }}><Ionicons name='add' size={22} /></TouchableHighlight> }} component={Contacts} />
                 <Tab.Screen name="chats" options={{
                     title: 'Chats', headerRight: () => <>
-                        <Text style={{ marginRight:15 }}>
-                            <TouchableOpacity  onPress={() => console.log('New Chat')}>
-                                <Image source={addChatIcon} style={{ marginRight:20 }}/>
+                        <Text style={{ marginRight: 15 }}>
+                            <TouchableOpacity onPress={() => console.log('New Chat')}>
+                                <Image source={addChatIcon} style={{ marginRight: 20 }} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => console.log('Settings')}>
-                                <Image source={listIcon}/>
+                                <Image source={listIcon} />
                             </TouchableOpacity>
                         </Text>
                     </>

@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FlatList, Image, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { loader, userId } from '../../utils/utils';
 
 export const Contacts = () => {
     const [search, setSearch] = useState('');
@@ -27,7 +28,24 @@ export const Contacts = () => {
         { id: '19', name: 'Mia Thomas', lastSeen: '4 hours ago', image: require('../../assets/images/user2.png'), online: false },
         { id: '20', name: 'Ethan White', lastSeen: 'Online', image: require('../../assets/images/user3.png'), online: true },
     ];
-    
+
+    useEffect(() => {
+        getAllData()
+    }, []);
+
+
+    async function getAllData() {
+        try {
+            loader.start()
+            let id = await userId()
+            // console.log(id)
+        } catch (err) {
+            console.log(err)
+        } finally {
+            loader.stop()
+
+        }
+    }
 
 
     const renderItem = ({ item }) => (
@@ -46,31 +64,31 @@ export const Contacts = () => {
             {item.online && <View style={styles.onlineDot} />}
         </View>
     );
-  return (
-    <>
-     <View style={styles.container}>
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <Ionicons name="search-outline" size={20} color="#ADB5BD" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search"
-                    placeholderTextColor="#ADB5BD"
-                    value={search}
-                    onChangeText={setSearch}
+    return (
+        <>
+            <View style={styles.container}>
+                {/* Search Bar */}
+                <View style={styles.searchContainer}>
+                    <Ionicons name="search-outline" size={20} color="#ADB5BD" style={styles.searchIcon} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search"
+                        placeholderTextColor="#ADB5BD"
+                        value={search}
+                        onChangeText={setSearch}
+                    />
+                </View>
+
+                {/* Contact List */}
+                <FlatList
+                    data={contacts.filter(contact => contact.name.toLowerCase().includes(search.toLowerCase()))}
+                    keyExtractor={item => item.id}
+                    renderItem={renderItem}
+                    showsVerticalScrollIndicator={false}
                 />
             </View>
-
-            {/* Contact List */}
-            <FlatList
-                data={contacts.filter(contact => contact.name.toLowerCase().includes(search.toLowerCase()))}
-                keyExtractor={item => item.id}
-                renderItem={renderItem}
-                showsVerticalScrollIndicator={false}
-            />
-        </View>
-    </>
-  )
+        </>
+    )
 }
 
 

@@ -3,9 +3,12 @@ import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'reac
 import { PrimaryBtn } from '../../components/Buttons'
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { updateUser } from '../../service/AuthApis';
+import { loader } from '../../utils/utils';
 
 export const ProfileDetails = (props) => {
     const [firstName, setFirstName] = useState('');
+    const [firstNameValid, setFirstNameValid] = useState(true);
     const [lastName, setLastName] = useState('');
     const [profileImage, setProfileImage] = useState(null);
 
@@ -21,6 +24,34 @@ export const ProfileDetails = (props) => {
             setProfileImage(result.assets[0].uri);
         }
     };
+
+
+    async function handleSubmit() {
+        if(!firstName){
+            setFirstNameValid(false)
+            return
+        }
+        try {
+            loader.start()
+            let payload = {
+                firstName,
+                lastName
+            }
+            
+            let res = await updateUser(props.route.params.id, payload)
+            if(res.data.success){
+                props.navigation.navigate('mainApp')
+            }
+            
+        } catch (err) {
+            console.log(err)
+        }finally{
+            loader.stop()
+        }
+    }
+
+
+
 
     return (
         <>
@@ -46,8 +77,12 @@ export const ProfileDetails = (props) => {
                             placeholder="First Name (Required)"
                             placeholderTextColor="#ADB5BD"
                             value={firstName}
-                            onChangeText={setFirstName}
+                            onChangeText={(text)=>{
+                                setFirstName(text)
+                                setFirstNameValid(true)
+                            }}
                         />
+                        {firstNameValid?'':<Text style={{color:'red',marginBottom:20}}>Please Enter First Name Before Continue</Text>}
                         <TextInput
                             style={style.input}
                             placeholder="Last Name (Optional)"
@@ -58,7 +93,7 @@ export const ProfileDetails = (props) => {
                     </View>
                 </View>
                 <View>
-                    <PrimaryBtn title='Save' onPress={() => props.navigation.navigate('mainApp')} />
+                    <PrimaryBtn title='Save' onPress={handleSubmit} />
                 </View>
             </View>
         </>

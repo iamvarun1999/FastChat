@@ -2,8 +2,10 @@ import React from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
 import startImg from '../../assets/images/start.png'
 import { PrimaryBtn, SimpleBtn } from '../../components/Buttons'
+import { getToken } from '../../utils/auth'
 
 const GetStarted = (props) => {
+    console.log(getToken())
     return (
         <>
             <View style={style.container}>

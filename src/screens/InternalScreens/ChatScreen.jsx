@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { loader, userId } from '../../utils/utils';
+import { getUserByPhone } from '../../service/AuthApis';
+import { useDispatch } from 'react-redux';
+import { updateUserData } from '../../store/slices/userDataSlice';
 
 const messages = [
     { id: '1', type: 'image', content: require('../../assets/images/cat.png'), timestamp: '16:46' },
@@ -11,8 +15,30 @@ const messages = [
     { id: '6', type: 'text', sender: 'Other', content: 'Good morning, did you sleep well?', timestamp: '09:45' }
 ];
 
-export default function ChatScreen() {
+export default function ChatScreen(props) {
     const [input, setInput] = useState('');
+    const dispatch = useDispatch()
+
+
+    useEffect(() => {
+        getUserData();
+    }, []);
+
+    async function getUserData() {
+        try {
+            loader.start();
+            console.log(props.route.params)
+            let id = await userId();
+            let res = await getUserByPhone({phone:`+91${props.route.params.phone}`})
+            dispatch(updateUserData(res.data.data))
+console.log(res.data.data)
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            loader.stop();
+        }
+    }
 
     const renderMessage = ({ item }) => {
         if (item.type === 'image') {
@@ -26,11 +52,11 @@ export default function ChatScreen() {
         if (item.type === 'audio') {
             return (
                 <View style={[styles.messageBubble, styles.sentMessage]}>
-                   <View style={{display:'flex',flexDirection:'row',alignItems:'center'}}>
-                   <Ionicons name="play" size={20} color="#fff" />
-                    <Text style={styles.audioText}>{item.duration}</Text>
-                    <View style={styles.audioWave} />
-                   </View>
+                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="play" size={20} color="#fff" />
+                        <Text style={styles.audioText}>{item.duration}</Text>
+                        <View style={styles.audioWave} />
+                    </View>
                     <Text style={styles.timestampSent}>{item.timestamp} - {item.status}</Text>
                 </View>
             );
@@ -38,7 +64,7 @@ export default function ChatScreen() {
         return (
             <View style={[styles.messageBubble, item.sender === 'You' ? styles.sentMessage : styles.receivedMessage]}>
                 {item.sender === 'You' && <Text style={styles.sender}>You</Text>}
-                <Text style={item.sender === 'You' ?styles.messageText:styles.messageGet}>{item.content}</Text>
+                <Text style={item.sender === 'You' ? styles.messageText : styles.messageGet}>{item.content}</Text>
                 <Text style={item.sender === 'You' ? styles.timestampSent : styles.timestamp}>{item.timestamp} {item.status && `- ${item.status}`}</Text>
             </View>
         );
@@ -150,7 +176,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     audioWave: {
-        width:100,
+        width: 100,
         height: 5,
         backgroundColor: '#fff',
         marginHorizontal: 10,

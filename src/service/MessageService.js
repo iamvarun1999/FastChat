@@ -17,3 +17,7 @@ export async function sendMessage(payload) {
 export async function sendNewMessage(id,payload) {
     return await axios.post(`${baseUrl}${APIS.message.sendMessage}${id}`,payload)
 }
+
+export async function markAsReed(id,chatId) {
+    return await axios.patch(`${baseUrl}${APIS.message.markSeen}${id}/${chatId}`)
+}

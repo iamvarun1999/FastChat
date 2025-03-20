@@ -8,28 +8,6 @@ export const Contacts = (props) => {
     const [search, setSearch] = useState('');
     const [allData, setAllData] = useState([])
 
-    // const contacts = [
-    //     { id: '1', name: 'Athalia Putri', lastSeen: 'Yesterday', image: require('../../assets/images/user1.png'), online: false },
-    //     { id: '2', name: 'Erlan Sadewa', lastSeen: 'Online', image: require('../../assets/images/user2.png'), online: true },
-    //     { id: '3', name: 'Midala Huera', lastSeen: '3 hours ago', image: require('../../assets/images/user3.png'), online: false },
-    //     { id: '4', name: 'Nafisa Gitari', lastSeen: 'Online', image: require('../../assets/images/user1.png'), online: true },
-    //     { id: '5', name: 'Raki Devon', lastSeen: 'Online', image: null, online: true }, // No image case
-    //     { id: '6', name: 'Salsabila Akira', lastSeen: '30 minutes ago', image: null, online: false }, // No image case
-    //     { id: '7', name: 'Michael Smith', lastSeen: '2 hours ago', image: require('../../assets/images/user2.png'), online: false },
-    //     { id: '8', name: 'Aisha Khan', lastSeen: 'Online', image: require('../../assets/images/user3.png'), online: true },
-    //     { id: '9', name: 'Liam Johnson', lastSeen: '5 hours ago', image: require('../../assets/images/user1.png'), online: false },
-    //     { id: '10', name: 'Sophia Williams', lastSeen: 'Online', image: require('../../assets/images/user2.png'), online: true },
-    //     { id: '11', name: 'Noah Brown', lastSeen: '10 minutes ago', image: null, online: true },
-    //     { id: '12', name: 'Emma Davis', lastSeen: 'Yesterday', image: require('../../assets/images/user3.png'), online: false },
-    //     { id: '13', name: 'Olivia Martinez', lastSeen: '3 hours ago', image: require('../../assets/images/user1.png'), online: true },
-    //     { id: '14', name: 'William Garcia', lastSeen: 'Online', image: null, online: false },
-    //     { id: '15', name: 'James Wilson', lastSeen: 'Online', image: require('../../assets/images/user2.png'), online: true },
-    //     { id: '16', name: 'Lucas Moore', lastSeen: '7 hours ago', image: require('../../assets/images/user3.png'), online: false },
-    //     { id: '17', name: 'Charlotte Taylor', lastSeen: 'Online', image: require('../../assets/images/user1.png'), online: true },
-    //     { id: '18', name: 'Benjamin Anderson', lastSeen: '15 minutes ago', image: null, online: true },
-    //     { id: '19', name: 'Mia Thomas', lastSeen: '4 hours ago', image: require('../../assets/images/user2.png'), online: false },
-    //     { id: '20', name: 'Ethan White', lastSeen: 'Online', image: require('../../assets/images/user3.png'), online: true },
-    // ];
 
     useEffect(() => {
         getAllData()

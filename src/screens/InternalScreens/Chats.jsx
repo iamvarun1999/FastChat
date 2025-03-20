@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { loader, userId } from '../../utils/utils';
+import { getAllFriends } from '../../service/MessageService';
+import moment from 'moment';
 
 const stories = [
   { id: '0', name: 'Your Story', image: require('../../assets/images/plus.png') },
@@ -21,30 +24,66 @@ const chats = [
 ];
 
 export default function ChatScreen(props) {
+  const [allData, setAllData] = useState([])
+
+
+  useEffect(() => {
+    getAllData()
+  }, [props.route]);
+
+
+  async function getAllData() {
+    try {
+      loader.start()
+      let id = await userId()
+      let res = await getAllFriends(id)
+      let data = res?.data?.data || []
+
+      let formatedData = data?.map(res => {
+        return {
+          messages: res.messages?.map(res => ({ ...res, unread: res?.messages?.filter(item => item.status == 'sent')?.length })),
+          _id: res?._id,
+          userData: res?.user1?._id === id ? res?.user2 : res?.user1,
+          unread: res?.messages?.filter(item => item.status == 'sent' && item.sender !== id)?.length
+        }
+      })
+      setAllData(formatedData)
+
+    } catch (err) {
+      console.log(err)
+    } finally {
+      loader.stop()
+
+    }
+  }
+
+
+
+
   return (
     <View style={styles.container}>
       {/* Stories Section */}
-     <View>
-     <FlatList
-        data={stories}
-        horizontal
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.storyItem}>
-            <TouchableOpacity style={[styles.storyImageContainer, !item.image && styles.noImage]}>
-              {item.image ? (
-                <Image source={item.image} style={styles.storyImage} />
-              ) : (
-                <Text style={styles.storyInitials}>SA</Text>
-              )}
-            </TouchableOpacity>
-            <Text style={styles.storyName}>{item.name}</Text>
-          </View>
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingVertical: 10 }}
-      />
-     </View>
+      <View>
+        <FlatList
+          data={stories}
+          horizontal
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.storyItem}>
+              <TouchableOpacity style={[styles.storyImageContainer, !item.image && styles.noImage]}>
+                {item.image ? (
+                  <Image source={item.image} style={styles.storyImage} />
+                ) : (
+                  <Text style={styles.storyInitials}>SA</Text>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.storyName}>{item.name}</Text>
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingVertical: 10 }}
+        />
+      </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -55,27 +94,27 @@ export default function ChatScreen(props) {
       {/* Chat List */}
       <FlatList
         // style={{ flex: 4 }}
-        data={chats}
-        keyExtractor={(item) => item.id}
+        data={allData}
+        keyExtractor={(item) => item?._id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.chatItem} onPress={()=>props.navigation.navigate('chatscreen')}>
+          <TouchableOpacity style={styles.chatItem} onPress={() => props.navigation.navigate('chatscreen', { id: item?._id })}>
             <View style={styles.chatLeft}>
-              {item.image ? (
+              {item?.image ? (
                 <Image source={item.image} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.noImage]}>
-                  <Text style={styles.initials}>{item.name[0]}</Text>
+                  <Text style={styles.initials}>{item?.userData?.firstName?.charAt(0)}{item?.userData?.lastName?.charAt(0)}</Text>
                 </View>
               )}
-              {item.online && <View style={styles.onlineIndicator} />}
+              {item?.online && <View style={styles.onlineIndicator} />}
             </View>
             <View style={styles.chatMiddle}>
-              <Text style={styles.chatName}>{item.name}</Text>
-              <Text style={styles.chatMessage}>{item.message}</Text>
+              <Text style={styles.chatName}>{item?.userData?.firstName} {item?.userData?.lastName}</Text>
+              <Text style={styles.chatMessage}>{item?.messages?.[item?.messages?.length - 1]?.message?.slice(0, 35)}</Text>
             </View>
             <View style={styles.chatRight}>
-              <Text style={styles.chatTime}>{item.time}</Text>
-              {item.unread > 0 && (
+              <Text style={styles.chatTime}>{moment(item?.messages?.[item?.messages?.length - 1]?.date_time).format('DD/MM hh:mm a')}</Text>
+              {item?.unread > 0 && (
                 <View style={styles.unreadBadge}>
                   <Text style={styles.unreadText}>{item.unread}</Text>
                 </View>

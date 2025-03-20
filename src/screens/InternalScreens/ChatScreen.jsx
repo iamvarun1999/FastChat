@@ -5,17 +5,20 @@ import { loader, userId } from '../../utils/utils';
 import { getUserByPhone } from '../../service/AuthApis';
 import { useDispatch } from 'react-redux';
 import { updateUserData } from '../../store/slices/userDataSlice';
-import { getAllMessages, sendMessage, sendNewMessage } from '../../service/MessageService';
+import { getAllMessages, markAsReed, sendMessage, sendNewMessage } from '../../service/MessageService';
 import moment from 'moment';
+import { io } from 'socket.io-client';
+import { baseUrl } from '../../service/Routes';
+import axios from 'axios';
 
-const messages = [
-    { id: '1', type: 'image', content: require('../../assets/images/cat.png'), timestamp: '16:46' },
-    { id: '2', type: 'text', sender: 'You', content: 'Can I come over?', timestamp: '16:46' },
-    { id: '3', type: 'text', sender: 'Other', content: "Of course, let me know if you're on your way", timestamp: '16:46' },
-    { id: '4', type: 'text', sender: 'You', content: "K, I'm on my way", timestamp: '16:50', status: 'Read' },
-    { id: '5', type: 'audio', duration: '0:20', timestamp: '09:13', status: 'Read' },
-    { id: '6', type: 'text', sender: 'Other', content: 'Good morning, did you sleep well?', timestamp: '09:45' }
-];
+// const messages = [
+//     { id: '1', type: 'image', content: require('../../assets/images/cat.png'), timestamp: '16:46' },
+//     { id: '2', type: 'text', sender: 'You', content: 'Can I come over?', timestamp: '16:46' },
+//     { id: '3', type: 'text', sender: 'Other', content: "Of course, let me know if you're on your way", timestamp: '16:46' },
+//     { id: '4', type: 'text', sender: 'You', content: "K, I'm on my way", timestamp: '16:50', status: 'Read' },
+//     { id: '5', type: 'audio', duration: '0:20', timestamp: '09:13', status: 'Read' },
+//     { id: '6', type: 'text', sender: 'Other', content: 'Good morning, did you sleep well?', timestamp: '09:45' }
+// ];
 
 export default function ChatScreen(props) {
     const dispatch = useDispatch()
@@ -25,9 +28,28 @@ export default function ChatScreen(props) {
     const [messageData, setMessageData] = useState([])
 
 
+    let socket = io.connect(baseUrl, {
+        auth: { userId: senderId, username: '' }
+    })
+
+
     useEffect(() => {
         getUserData();
     }, [props.route.params]);
+
+
+    useEffect(() => {
+        socket.on('receive_message', (data) => {
+            setMessageData((prevMessages) => [data, ...prevMessages]);
+        });
+        socket.on('user_online', (data) => {
+            // console.log(data)
+        });
+
+        return () => {
+            socket.off('receive_message');
+        };
+    }, []);
 
     async function getUserData() {
         try {
@@ -39,10 +61,11 @@ export default function ChatScreen(props) {
                 dispatch(updateUserData(res.data.data))
                 setReceiverId(res?.data?.data?._id)
             }
-            
+
             if (props.route.params?.id) {
                 let res = await getAllMessages(props.route.params?.id)
                 let data = res?.data?.data
+                await markAllMessageAsRead(id, data?._id, data?.messages)
                 if (data?.user1?._id !== id) {
                     dispatch(updateUserData(data?.user1))
                     setReceiverId(data?.user1?._id)
@@ -51,7 +74,7 @@ export default function ChatScreen(props) {
                     setReceiverId(data?.user2?._id)
                 }
                 setMessageData(data?.messages?.reverse())
-                console.log(data)
+                // console.log(data)
             }
 
         } catch (err) {
@@ -60,6 +83,35 @@ export default function ChatScreen(props) {
             loader.stop();
         }
     }
+
+
+    // async function markAllMessageAsRead(id, chatId,data) {
+
+    //     try {
+    //         let mm = data?.filter(res => res?.sender !== id && res?.status == 'sent')
+    //         let res = mm?.map(async (item) => await markAsReed(chatId, item?._id))
+    //         let aa = await Promise.all(res)
+
+    //     } catch (err) {
+    //         console.log(err)
+    //     }
+
+    // }
+
+    async function markAllMessageAsRead(id, chatId, data) {
+        try {
+            const unreadMessages = data?.filter(res => res?.sender !== id && res?.status === 'sent');
+
+            if (unreadMessages.length > 0) {
+                await Promise.allSettled(unreadMessages.map(item => markAsReed(chatId, item._id)));
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+
+
 
 
     async function sendMessageHandle() {
@@ -78,7 +130,8 @@ export default function ChatScreen(props) {
                     }]
                 }
                 let res = await sendMessage(payload)
-                props.navigation.navigate('chatscreen',{id:res?.data?.data?._id})
+                socket.emit('send_message', payload.messages[0]);
+                props.navigation.navigate('chatscreen', { id: res?.data?.data?._id })
             }
             if (props.route.params?.id) {
                 let payload = {
@@ -89,7 +142,8 @@ export default function ChatScreen(props) {
                     status: 'sent',
                     date_time: moment()?._d
                 }
-                let res = await sendNewMessage(props.route.params?.id, payload)
+                socket.emit('send_message', payload);
+                await sendNewMessage(props.route.params?.id, payload)
             }
             setInput('')
         } catch (err) {
@@ -122,7 +176,7 @@ export default function ChatScreen(props) {
             <View style={[styles.messageBubble, item.sender === senderId ? styles.sentMessage : styles.receivedMessage]}>
                 {/* {item.sender === senderId && <Text style={styles.sender}>You</Text>} */}
                 <Text style={item.sender === senderId ? styles.messageText : styles.messageGet}>{item?.message}</Text>
-                <Text style={item.sender === senderId ? styles.timestampSent : styles.timestamp}>{moment(item.date_time)?.format('hh:mm A')} {item.status && `- ${item.status}`}</Text>
+                <Text style={item.sender === senderId ? styles.timestampSent : styles.timestamp}>{moment(item.date_time)?.format('hh:mm A')} {item.sender === senderId && `- ${item.status}`}</Text>
             </View>
         );
     };

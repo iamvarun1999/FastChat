@@ -14,5 +14,6 @@ export const APIS = {
         getAllMessagesData:'message/getAllMessageData/',
         startMessage:'message/startMessage',
         sendMessage:'message/sendMessage/',
+        markSeen:'message/seenStatus/'
     }
 }

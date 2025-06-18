@@ -5,7 +5,22 @@ let initialState = {
 }
 
 
+let userIdState = {
+    id:''
+}
+
+
 export const userDataSlice = createSlice({
+    name: 'allUsers',
+    initialState,
+    reducers: {
+        updateUserData: (state, action) => {
+            state.data = action.payload
+        }
+    }
+
+})
+export const userDat = createSlice({
     name: 'allUsers',
     initialState,
     reducers: {

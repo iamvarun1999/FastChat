@@ -10,6 +10,7 @@ import moment from 'moment';
 import { io } from 'socket.io-client';
 import { baseUrl } from '../../service/Routes';
 import axios from 'axios';
+import { Audio } from 'expo-av';
 
 // const messages = [
 //     { id: '1', type: 'image', content: require('../../assets/images/cat.png'), timestamp: '16:46' },
@@ -35,11 +36,18 @@ export default function ChatScreen(props) {
 
     useEffect(() => {
         getUserData();
-    }, [props.route.params]);
+    }, []);
 
+    const playSound = async () => {
+        const { sound } = await Audio.Sound.createAsync(
+            require('../../assets/Audios/popUpMessage.mp3')
+        );
+        await sound.playAsync();
+    };
 
     useEffect(() => {
         socket.on('receive_message', (data) => {
+            playSound()
             setMessageData((prevMessages) => [data, ...prevMessages]);
         });
         socket.on('user_online', (data) => {
@@ -53,7 +61,7 @@ export default function ChatScreen(props) {
 
     async function getUserData() {
         try {
-            loader.start();
+            // loader.start();
             let id = await userId();
             setSenderId(id)
             if (props.route.params?.phone) {
@@ -65,6 +73,7 @@ export default function ChatScreen(props) {
             if (props.route.params?.id) {
                 let res = await getAllMessages(props.route.params?.id)
                 let data = res?.data?.data
+
                 await markAllMessageAsRead(id, data?._id, data?.messages)
                 if (data?.user1?._id !== id) {
                     dispatch(updateUserData(data?.user1))
@@ -80,30 +89,21 @@ export default function ChatScreen(props) {
         } catch (err) {
             console.error(err);
         } finally {
-            loader.stop();
+            // loader.stop();
         }
     }
-
-
-    // async function markAllMessageAsRead(id, chatId,data) {
-
-    //     try {
-    //         let mm = data?.filter(res => res?.sender !== id && res?.status == 'sent')
-    //         let res = mm?.map(async (item) => await markAsReed(chatId, item?._id))
-    //         let aa = await Promise.all(res)
-
-    //     } catch (err) {
-    //         console.log(err)
-    //     }
-
-    // }
 
     async function markAllMessageAsRead(id, chatId, data) {
         try {
             const unreadMessages = data?.filter(res => res?.sender !== id && res?.status === 'sent');
-
             if (unreadMessages.length > 0) {
-                await Promise.allSettled(unreadMessages.map(item => markAsReed(chatId, item._id)));
+                let ids = unreadMessages.map(item => item._id)
+                let SocketPayload = {
+                    _id: chatId,
+                    chatIds: ids,
+                    senderId: id
+                }
+                socket.emit('markAllMessageRead', SocketPayload)
             }
         } catch (err) {
             console.log(err);
@@ -131,6 +131,7 @@ export default function ChatScreen(props) {
                 }
                 let res = await sendMessage(payload)
                 socket.emit('send_message', payload.messages[0]);
+                socket.emit('refresh_chats', senderId);
                 props.navigation.navigate('chatscreen', { id: res?.data?.data?._id })
             }
             if (props.route.params?.id) {

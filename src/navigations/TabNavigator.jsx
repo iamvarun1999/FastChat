@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Contacts } from '../screens/InternalScreens/Contacts';
 import { MoreOptions } from '../screens/InternalScreens/MoreOptions';
@@ -8,10 +8,18 @@ import { Image, Text, TouchableHighlight, TouchableOpacity } from 'react-native'
 import ChatScreen from '../screens/InternalScreens/Chats'
 import listIcon from '../assets/images/listCheck.png'
 import addChatIcon from '../assets/images/messageAdd.png'
+import { useDispatch } from 'react-redux';
+import { listenToSocketUpdates } from '../store/slices/usersSlice';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator(props) {
+  const dispatch = useDispatch()
+
+  useEffect(()=>{
+    dispatch(listenToSocketUpdates())
+
+  },[])
     
 
     return (

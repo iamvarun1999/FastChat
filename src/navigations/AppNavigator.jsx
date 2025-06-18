@@ -13,7 +13,6 @@ import Auth from '../components/Auth';
 import { ImportContact } from '../screens/InternalScreens/ImportContact';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllContacts } from '../store/slices/contactSlice';
-import { getAllUsersSlice } from '../store/slices/usersSlice';
 
 const Stack = createStackNavigator();
 
@@ -24,7 +23,6 @@ export default function AppNavigator() {
 
   useEffect(() => {
     dispatch(getAllContacts())
-    dispatch(getAllUsersSlice())
   }, [])
 
 

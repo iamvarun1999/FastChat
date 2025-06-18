@@ -4,6 +4,9 @@ import { FontAwesome } from '@expo/vector-icons';
 import { loader, userId } from '../../utils/utils';
 import { getAllFriends } from '../../service/MessageService';
 import moment from 'moment';
+import { useSelector } from 'react-redux';
+import { io } from 'socket.io-client';
+import { baseUrl } from '../../service/Routes';
 
 const stories = [
   { id: '0', name: 'Your Story', image: require('../../assets/images/plus.png') },
@@ -11,48 +14,58 @@ const stories = [
   { id: '2', name: 'Salsabila Akira', image: null }, // No image case
 ];
 
-const chats = [
-  { id: '1', name: 'Athalia Putri', message: 'Good morning, did you sleep well?', time: 'Today', image: require('../../assets/images/user1.png'), online: true, unread: 1 },
-  { id: '2', name: 'Raki Devon', message: 'How is it going?', time: '17/6', image: null, online: true, unread: 0 },
-  { id: '3', name: 'Erlan Sadewa', message: 'Aight, noted', time: '17/6', image: require('../../assets/images/user2.png'), online: false, unread: 1 },
-  { id: '13', name: 'Athalia Putri', message: 'Good morning, did you sleep well?', time: 'Today', image: require('../../assets/images/user1.png'), online: true, unread: 1 },
-  { id: '2g', name: 'Raki Devon', message: 'How is it going?', time: '17/6', image: null, online: true, unread: 0 },
-  { id: '34', name: 'Erlan Sadewa', message: 'Aight, noted', time: '17/6', image: require('../../assets/images/user2.png'), online: false, unread: 1 },
-  { id: '17', name: 'Athalia Putri', message: 'Good morning, did you sleep well?', time: 'Today', image: require('../../assets/images/user1.png'), online: true, unread: 1 },
-  { id: '24', name: 'Raki Devon', message: 'How is it going?', time: '17/6', image: null, online: true, unread: 0 },
-  { id: '38', name: 'Erlan Sadewa', message: 'Aight, noted', time: '17/6', image: require('../../assets/images/user2.png'), online: false, unread: 1 },
-];
+// const chats = [
+//   { id: '1', name: 'Athalia Putri', message: 'Good morning, did you sleep well?', time: 'Today', image: require('../../assets/images/user1.png'), online: true, unread: 1 },
+//   { id: '2', name: 'Raki Devon', message: 'How is it going?', time: '17/6', image: null, online: true, unread: 0 },
+//   { id: '3', name: 'Erlan Sadewa', message: 'Aight, noted', time: '17/6', image: require('../../assets/images/user2.png'), online: false, unread: 1 },
+//   { id: '13', name: 'Athalia Putri', message: 'Good morning, did you sleep well?', time: 'Today', image: require('../../assets/images/user1.png'), online: true, unread: 1 },
+//   { id: '2g', name: 'Raki Devon', message: 'How is it going?', time: '17/6', image: null, online: true, unread: 0 },
+//   { id: '34', name: 'Erlan Sadewa', message: 'Aight, noted', time: '17/6', image: require('../../assets/images/user2.png'), online: false, unread: 1 },
+//   { id: '17', name: 'Athalia Putri', message: 'Good morning, did you sleep well?', time: 'Today', image: require('../../assets/images/user1.png'), online: true, unread: 1 },
+//   { id: '24', name: 'Raki Devon', message: 'How is it going?', time: '17/6', image: null, online: true, unread: 0 },
+//   { id: '38', name: 'Erlan Sadewa', message: 'Aight, noted', time: '17/6', image: require('../../assets/images/user2.png'), online: false, unread: 1 },
+// ];
 
 export default function ChatScreen(props) {
   const [allData, setAllData] = useState([])
+  const [idd, setIdd] = useState('')
+  const selector = useSelector(e => e.usersData)
+
+
+  let socket = io.connect(baseUrl, {
+    auth: { userId: idd, username: '' }
+  })
 
 
   useEffect(() => {
     getAllData()
-  }, [props.route]);
+  }, [selector.data]);
 
 
   async function getAllData() {
     try {
-      loader.start()
+      // loader.start()
       let id = await userId()
-      let res = await getAllFriends(id)
-      let data = res?.data?.data || []
+      setIdd(id)
+      // let res = await getAllFriends(id)
+      let data = selector?.data
+      console.log(selector, 'kookokok')
 
       let formatedData = data?.map(res => {
         return {
-          messages: res.messages?.map(res => ({ ...res, unread: res?.messages?.filter(item => item.status == 'sent')?.length })),
+          messages: res?.messages,
           _id: res?._id,
           userData: res?.user1?._id === id ? res?.user2 : res?.user1,
           unread: res?.messages?.filter(item => item.status == 'sent' && item.sender !== id)?.length
         }
       })
       setAllData(formatedData)
+      console.log(formatedData)
 
     } catch (err) {
       console.log(err)
     } finally {
-      loader.stop()
+      // loader.stop()
 
     }
   }

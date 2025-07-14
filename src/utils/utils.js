@@ -1,4 +1,3 @@
-import { jwtDecode } from "jwt-decode";
 import { startLoader, stopLoader } from "../store/slices/loaderSlice";
 import { store } from "../store/store";
 import { getToken } from "./auth";
@@ -12,10 +11,9 @@ export const loader = {
 
 export const decodeToken = (token) => {
   try {
-    const decoded = jwtDecode(token);
-    return decoded;
+    // const decoded = jwtDecode(token);
+    return token;
   } catch (error) {
-    console.error('Error decoding token:', error);
     return null;
   }
 };
@@ -24,7 +22,7 @@ export const decodeToken = (token) => {
 export const userId = async () => {
   const token = await getToken();
   if (token) {
-    return decodeToken(token)?._id || undefined
+    return token || undefined
   } 
 };
 

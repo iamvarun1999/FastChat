@@ -73,6 +73,46 @@ export const getSnapShotData = async (collectionName, key, operator, value) => {
   });
 };
 
+export const listenToFirestore = (collectionName, docId, callback) => {
+  try {
+    let unsubscribe;
+
+    if (docId) {
+      // 🔹 Listen to a specific document
+      const docRef = doc(db, collectionName, docId);
+      unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          callback({
+            id: docSnap.id,
+            ...docSnap.data()
+          });
+        } else {
+          console.warn("No such document!");
+          callback(null);
+        }
+      });
+    } else {
+      // 🔹 Listen to the entire collection
+      const colRef = collection(db, collectionName);
+      unsubscribe = onSnapshot(colRef, (querySnapshot) => {
+        const docs = [];
+        querySnapshot.forEach((doc) => {
+          docs.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        callback(docs);
+      });
+    }
+
+    return unsubscribe; // allow unsubscribe
+  } catch (error) {
+    console.error("Error listening to Firestore:", error);
+    return () => {}; // no-op fallback unsubscribe
+  }
+};
+
 export const compoundQuery = async (collectionName, QueryArr) => {
   const arr = [];
   const queryParams = [];

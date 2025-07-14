@@ -1,29 +1,29 @@
 import { useEffect, useState } from 'react'
-import { Alert, StyleSheet, Text, View } from 'react-native'
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 import { PrimaryBtn } from '../../components/Buttons'
 import { loader } from '../../utils/utils'
-import { addDocument } from '../../Firebase/CloudFirestore/SetData'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import CustomInput from '../../components/CustomInput'
 import Feather from '@expo/vector-icons/Feather';
 import { getMatchingData } from '../../Firebase/CloudFirestore/GetData'
 import { saveToken } from '../../utils/auth'
+import WarningModal from '../../components/WarningModal'
 
-{/* <Feather name="eye" size={24} color="black" /> */ }
-{/* <Feather name="eye-off" size={24} color="black" /> */ }
+
 
 export const EnterPhone = (props) => {
     const [states, setStates] = useState({
         showPassword: true,
         emailValid1: true,
         emailValid2: true,
-        passwordValid: true
+        passwordValid: true,
+        showModal1: false,
+        modalContent: ''
     })
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     })
-    const [isValidPhone, setIsValidPhone] = useState(true)
 
 
 
@@ -41,36 +41,27 @@ export const EnterPhone = (props) => {
             setStates(pre => ({ ...pre, emailValid1: false }))
             return
         }
-        console.log(formData)
 
         try {
-            // loader.start()
+            loader.start()
             let res = await getMatchingData('users', 'email', '==', formData.email.toLowerCase())
             if (res?.length !== 0) {
                 let data = res[0]
                 if (data.password == formData.password) {
+                    console.log(data?.id)
                     await saveToken(data?.id)
                     props.navigation.navigate('mainApp', { id: data?.id })
-
+                    setFormData({
+                        email: '',
+                        password: ''
+                    })
                 } else {
-                    Alert('Please enter valid credentials.')
+                    setStates(pre => ({ ...pre, showModal1: true, modalContent: 'Please enter valid credentials.' }))
                 }
 
             } else {
-                Alert('Please enter valid credentials.')
+                setStates(pre => ({ ...pre, showModal1: true, modalContent: 'Please enter valid credentials.' }))
             }
-            return
-
-            // let payload = {
-            //     name: '',
-            //     createdAt: new Date(),
-            //     profile: '',
-            //     gender: '',
-            //     email: formData.email.toLowerCase(),
-            //     password: formData.password
-            // }
-            // await addDocument('users', payload)
-            // props.navigation.navigate('enterotp', { phone })
         } catch (err) {
             Alert('Some Error occupide.')
         } finally {
@@ -91,6 +82,7 @@ export const EnterPhone = (props) => {
 
     return (
         <>
+            <WarningModal open={states.showModal1} toggle={() => setStates(pre => ({ ...pre, showModal1: false }))} content={states.modalContent} />
             <SafeAreaProvider>
                 <SafeAreaView style={style.container}>
                     <View style={style.inner}>
@@ -115,27 +107,29 @@ export const EnterPhone = (props) => {
                                 </View>
                                 <View>
                                     <Text style={style.label}>Password</Text>
-                                    <CustomInput
-                                        placeholder='Enter Password'
-                                        secureTextEntry={states.showPassword}
-                                        onChangeText={(e) => {
-                                            setFormData(pre => ({ ...pre, password: e }))
-                                            setStates(pre => ({ ...pre, passwordValid: true }))
-                                        }}
-                                        value={formData.password}
-                                    />
+                                    <View style={style.passwordContainer}>
+                                        <Pressable style={style.eyeIcon} onPress={()=>setStates(pre=>({...pre,showPassword:!pre.showPassword}))}>
+                                            <Feather name={!states.showPassword ? "eye" : "eye-off"} size={20} color="black" />
+                                        </Pressable>
+                                        <CustomInput
+                                            placeholder='Enter Password'
+                                            secureTextEntry={states.showPassword}
+                                            onChangeText={(e) => {
+                                                setFormData(pre => ({ ...pre, password: e }))
+                                                setStates(pre => ({ ...pre, passwordValid: true }))
+                                            }}
+                                            value={formData.password}
+                                        />
+                                    </View>
+
                                     {states.passwordValid ? '' : <Text style={{ color: 'red' }}>Password is mandatory to fill.</Text>}
 
                                 </View>
-                                {/* <PhoneInputComponent onChangePhone={setPhone} setValid={setIsValidPhone} /> */}
-
-                                {/* {isValidPhone ? '' : <Text style={{ color: 'red' }}>Phone Number is mandatory to fill.</Text>} */}
                             </View>
                         </View>
                     </View>
                     <View>
                         <PrimaryBtn title='Continue' onPress={handleSubmit} />
-                        {/* <PrimaryBtn title='Continue' onPress={()=>props.navigation.navigate('enterotp')} /> */}
                     </View>
                 </SafeAreaView>
             </SafeAreaProvider>
@@ -185,4 +179,14 @@ const style = StyleSheet.create({
         lineHeight: 28,
         color: '#0F1828'
     },
+    passwordContainer: {
+        width: '100%',
+        position: 'relative'
+    },
+    eyeIcon: {
+        position: 'absolute',
+        top: 19,
+        right: 13,
+        zIndex: 4
+    }
 })

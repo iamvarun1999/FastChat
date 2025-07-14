@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { loader, userId } from '../../utils/utils';
-import { getAllFriends } from '../../service/MessageService';
+import { listenToFirestore } from '../../Firebase/CloudFirestore/GetData';
 
 export const Contacts = (props) => {
     const [search, setSearch] = useState('');
@@ -10,51 +9,33 @@ export const Contacts = (props) => {
 
 
     useEffect(() => {
-        getAllData()
+        listenToFirestore('users', null, (data) => {
+            setAllData(data)
+            console.log(data)
+        })
     }, []);
 
 
-    async function getAllData() {
-        try {
-            loader.start()
-            let id = await userId()
-            let res = await getAllFriends(id)
-            let data = res?.data?.data || []
-            let formatedData = data?.map(res => {
-                return {
-                    messages: res.messages,
-                    _id: res?._id,
-                    userData: res?.user1?._id === id ? res?.user2 : res?.user1
-                }
-            })
-            setAllData(formatedData)
-            
-        } catch (err) {
-            console.log(err)
-        } finally {
-            loader.stop()
-
-        }
-    }
-
-
     const renderItem = ({ item }) => (
-        <TouchableOpacity style={styles.contactItem} onPress={()=>props.navigation.navigate('chatscreen',{id:item?._id})}>
-            {item?.image ? (
-                <Image source={item?.image} style={styles.avatar} />
+        <TouchableOpacity key={item?.id} style={styles.contactItem} onPress={() => props.navigation.navigate('chatscreen', { id: item?.id })}>
+            {item?.profile ? (
+                <Image src={item?.profile} style={styles.avatar} />
             ) : (
                 <View style={styles.placeholderAvatar}>
-                    <Text style={styles.placeholderText}>{item?.userData?.firstName?.charAt(0)}{item?.userData?.lastName?.charAt(0)}</Text>
+                    <Text style={styles.placeholderText}>{item?.userData?.name?.charAt(0)}</Text>
                 </View>
             )}
             <View style={styles.textContainer}>
-                <Text style={styles.name}>{item?.userData?.firstName} {item?.userData?.lastName}</Text>
+                <Text style={styles.name}>{item?.name}</Text>
                 {/* last seen not integrated  */}
-                <Text style={styles.lastSeen}>{item?.lastSeen}</Text>
+                <Text style={styles.lastSeen}>{item?.lastSeen?'yes':'no'}</Text>
             </View>
             {item?.online && <View style={styles.onlineDot} />}
         </TouchableOpacity>
     );
+
+
+
     return (
         <>
             <View style={styles.container}>

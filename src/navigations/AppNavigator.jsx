@@ -38,7 +38,7 @@ export default function AppNavigator() {
         <Stack.Screen name="mainApp" options={{ title: '', headerShown: false }} component={TabNavigator} />
         <Stack.Screen name="importContact" options={{ title: 'Select Contact', headerShown: true, headerRight: () => <Text style={{ marginRight: 15 }}>{contact?.data?.length} contacts</Text> }} component={ImportContact} />
         <Stack.Screen name="chatscreen" options={{
-          title: `${user?.firstName} ${user?.lastName?user?.lastName:''}`, headerShown: true, headerRight: () => <Text style={{ marginRight: 15 }}>
+          title: `${user?.name}`, headerShown: true, headerRight: () => <Text style={{ marginRight: 15 }}>
             <TouchableOpacity onPress={() => console.log('New Chat')}>
               <Ionicons name="search-outline" size={22} color="black" style={{ marginEnd: 20 }} />
             </TouchableOpacity>

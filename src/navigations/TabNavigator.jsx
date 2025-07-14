@@ -18,7 +18,6 @@ export default function TabNavigator(props) {
 
   useEffect(()=>{
     dispatch(listenToSocketUpdates())
-
   },[])
     
 
@@ -28,7 +27,6 @@ export default function TabNavigator(props) {
                 screenOptions={({ route }) => ({
                     tabBarIcon: ({ focused, color, size }) => {
                         let iconName;
-
                         if (route.name === 'contacts') {
                             iconName = focused ? 'home' : 'home-outline';
                         } else if (route.name === 'chats') {
@@ -36,7 +34,6 @@ export default function TabNavigator(props) {
                         } else if (route.name === 'more') {
                             iconName = focused ? 'settings' : 'settings-outline';
                         }
-
                         return <Ionicons name={iconName} size={size} color={color} />;
                     },
                     tabBarActiveTintColor: primaryColor,

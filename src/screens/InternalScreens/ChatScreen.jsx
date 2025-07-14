@@ -1,25 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { loader, userId } from '../../utils/utils';
-import { getUserByPhone } from '../../service/AuthApis';
+import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
-import { updateUserData } from '../../store/slices/userDataSlice';
-import { getAllMessages, markAsReed, sendMessage, sendNewMessage } from '../../service/MessageService';
 import moment from 'moment';
-import { io } from 'socket.io-client';
-import { baseUrl } from '../../service/Routes';
-import axios from 'axios';
 import { Audio } from 'expo-av';
-
-// const messages = [
-//     { id: '1', type: 'image', content: require('../../assets/images/cat.png'), timestamp: '16:46' },
-//     { id: '2', type: 'text', sender: 'You', content: 'Can I come over?', timestamp: '16:46' },
-//     { id: '3', type: 'text', sender: 'Other', content: "Of course, let me know if you're on your way", timestamp: '16:46' },
-//     { id: '4', type: 'text', sender: 'You', content: "K, I'm on my way", timestamp: '16:50', status: 'Read' },
-//     { id: '5', type: 'audio', duration: '0:20', timestamp: '09:13', status: 'Read' },
-//     { id: '6', type: 'text', sender: 'Other', content: 'Good morning, did you sleep well?', timestamp: '09:45' }
-// ];
+import { userId } from '../../utils/utils';
 
 export default function ChatScreen(props) {
     const dispatch = useDispatch()
@@ -27,11 +12,6 @@ export default function ChatScreen(props) {
     const [senderId, setSenderId] = useState('')
     const [receiverId, setReceiverId] = useState('')
     const [messageData, setMessageData] = useState([])
-
-
-    let socket = io.connect(baseUrl, {
-        auth: { userId: senderId, username: '' }
-    })
 
 
     useEffect(() => {
@@ -46,67 +26,23 @@ export default function ChatScreen(props) {
     };
 
     useEffect(() => {
-        socket.on('receive_message', (data) => {
-            playSound()
-            setMessageData((prevMessages) => [data, ...prevMessages]);
-        });
-        socket.on('user_online', (data) => {
-            // console.log(data)
-        });
-
-        return () => {
-            socket.off('receive_message');
-        };
+       
     }, []);
 
     async function getUserData() {
         try {
             // loader.start();
+            let userID = props.route.params?.id
             let id = await userId();
+            console.log(id)
+            console.log(userID)
             setSenderId(id)
-            if (props.route.params?.phone) {
-                let res = await getUserByPhone({ phone: `+91${props.route.params?.phone}` })
-                dispatch(updateUserData(res.data.data))
-                setReceiverId(res?.data?.data?._id)
-            }
 
-            if (props.route.params?.id) {
-                let res = await getAllMessages(props.route.params?.id)
-                let data = res?.data?.data
-
-                await markAllMessageAsRead(id, data?._id, data?.messages)
-                if (data?.user1?._id !== id) {
-                    dispatch(updateUserData(data?.user1))
-                    setReceiverId(data?.user1?._id)
-                } else {
-                    dispatch(updateUserData(data?.user2))
-                    setReceiverId(data?.user2?._id)
-                }
-                setMessageData(data?.messages?.reverse())
-                // console.log(data)
-            }
 
         } catch (err) {
             console.error(err);
         } finally {
             // loader.stop();
-        }
-    }
-
-    async function markAllMessageAsRead(id, chatId, data) {
-        try {
-            const unreadMessages = data?.filter(res => res?.sender !== id && res?.status === 'sent');
-            if (unreadMessages.length > 0) {
-                let ids = unreadMessages.map(item => item._id)
-                let SocketPayload = {
-                    _id: chatId,
-                    chatIds: ids,
-                    senderId: id
-                }
-                socket.emit('markAllMessageRead', SocketPayload)
-            }
-        } catch (err) {
-            console.log(err);
         }
     }
 
@@ -117,35 +53,6 @@ export default function ChatScreen(props) {
     async function sendMessageHandle() {
         try {
 
-            if (props.route.params?.phone) {
-                let payload = {
-                    message_between: [senderId, receiverId],
-                    messages: [{
-                        type: 'text',
-                        message: input,
-                        sender: senderId,
-                        receiver: receiverId,
-                        status: 'sent',
-                        date_time: moment()?._d
-                    }]
-                }
-                let res = await sendMessage(payload)
-                socket.emit('send_message', payload.messages[0]);
-                socket.emit('refresh_chats', senderId);
-                props.navigation.navigate('chatscreen', { id: res?.data?.data?._id })
-            }
-            if (props.route.params?.id) {
-                let payload = {
-                    type: 'text',
-                    message: input,
-                    sender: senderId,
-                    receiver: receiverId,
-                    status: 'sent',
-                    date_time: moment()?._d
-                }
-                socket.emit('send_message', payload);
-                await sendNewMessage(props.route.params?.id, payload)
-            }
             setInput('')
         } catch (err) {
             console.log(err)

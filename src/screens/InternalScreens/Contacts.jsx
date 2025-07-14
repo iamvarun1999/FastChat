@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { listenToFirestore } from '../../Firebase/CloudFirestore/GetData';
+import { userId } from '../../utils/utils';
+import { listenToWhere } from '../../Firebase/CloudFirestore/RealtimeData';
 
 export const Contacts = (props) => {
     const [search, setSearch] = useState('');
@@ -9,11 +10,24 @@ export const Contacts = (props) => {
 
 
     useEffect(() => {
-        listenToFirestore('users', null, (data) => {
-            setAllData(data)
-            console.log(data)
-        })
+        getAllUsers()
     }, []);
+
+
+    async function getAllUsers() {
+        try {
+            let id = await userId();
+            listenToWhere('users', 'userId', '!=', id, (data) => {
+                setAllData(data)
+            })
+
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+
+
 
 
     const renderItem = ({ item }) => (
@@ -28,7 +42,7 @@ export const Contacts = (props) => {
             <View style={styles.textContainer}>
                 <Text style={styles.name}>{item?.name}</Text>
                 {/* last seen not integrated  */}
-                <Text style={styles.lastSeen}>{item?.lastSeen?'yes':'no'}</Text>
+                <Text style={styles.lastSeen}>{item?.lastSeen ? 'yes' : 'no'}</Text>
             </View>
             {item?.online && <View style={styles.onlineDot} />}
         </TouchableOpacity>
@@ -55,7 +69,7 @@ export const Contacts = (props) => {
                 <FlatList
                     data={allData}
                     // data={allData.filter(contact => contact?.firstName?.toLowerCase().includes(search?.toLowerCase()))}
-                    keyExtractor={item => item?._id}
+                    keyExtractor={item => item?.id}
                     renderItem={renderItem}
                     showsVerticalScrollIndicator={false}
                 />
